@@ -23,6 +23,11 @@ enum PieceType
     blackKing
 };
 
+struct Player
+{
+    int clickedSquare;
+} Player;
+
 //------------------------------------------------------------------------------------
 // Global Variables Declaration
 //------------------------------------------------------------------------------------
@@ -53,6 +58,7 @@ Bitboard pieceMasks[12];
 // Module Functions Declaration (local)
 //------------------------------------------------------------------------------------
 void InitGame();   // Initialize game
+void UpdateGame(); // Update game (one frame)
 void DrawGame();   // Draw game (one frame)
 void UnloadGame(); // Unload game variables
 
@@ -69,6 +75,7 @@ int main()
 
     while (!WindowShouldClose())
     {
+        UpdateGame();
         DrawGame();
     }
 
@@ -104,6 +111,21 @@ void InitGame()
     pieceMasks[blackRook]   = 0b10000001ULL << 56;
     pieceMasks[blackQueen]  = 0b00010000ULL << 56;
     pieceMasks[blackKing]   = 0b00001000ULL << 56;
+
+    Player.clickedSquare = -1;
+}
+
+// Update game (one frame)
+void UpdateGame()
+{
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+    {
+        Player.clickedSquare = 8 * (GetMouseY() / squareHeight) + GetMouseX() / squareWidth;
+    }
+    else if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
+    {
+        Player.clickedSquare = -1;
+    }
 }
 
 // Draw game (one frame)
@@ -119,13 +141,13 @@ void DrawGame()
             for (int j = 0; j < 8; j++)
             {
                 if ((i & 1) ^ (j & 1))
-                    DrawRectangle(j * squareWidth, i * squareHeight,
-                                  squareWidth, squareHeight, BROWN);
+                    DrawRectangle(j * squareWidth, i * squareHeight, squareWidth, squareHeight, BROWN);
                 else
-                    DrawRectangle(j * squareWidth, i * squareHeight,
-                                  squareWidth, squareHeight, BEIGE);
+                    DrawRectangle(j * squareWidth, i * squareHeight, squareWidth, squareHeight, BEIGE);
             }
         }
+
+        int clickedPiece = -1;
 
         // Draw pieces
         for (int piece = 0; piece < 12; piece++)
@@ -134,9 +156,17 @@ void DrawGame()
             {
                 int square = 63 - _tzcnt_u64(mask);
                 int i = square / 8, j = square % 8;
-                DrawTexture(pieceTextures[piece], j * squareWidth, i * squareHeight, WHITE);
+
+                if (square == Player.clickedSquare)
+                    clickedPiece = piece;
+                else
+                    DrawTexture(pieceTextures[piece], j * squareWidth, i * squareHeight, WHITE);
             }
         }
+
+        // The clicked piece is drawn last so it is infront of all the other pieces
+        if (clickedPiece != -1)
+            DrawTexture(pieceTextures[clickedPiece], GetMouseX() - squareWidth / 2, GetMouseY() - squareHeight / 2, WHITE);
     }
     EndDrawing();
 }
