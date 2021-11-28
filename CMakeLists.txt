@@ -33,6 +33,9 @@ endif()
 add_executable(${PROJECT_NAME} main.cpp)
 #set(raylib_VERBOSE 1)
 target_link_libraries(${PROJECT_NAME} raylib)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
+target_compile_options(${PROJECT_NAME} PUBLIC -march=native -O2)
+
 
 # Checks if OSX and links appropriate frameworks (Only required on MacOS)
 if (APPLE)
