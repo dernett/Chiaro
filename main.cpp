@@ -129,18 +129,18 @@ void InitGame()
 // Update game (one frame)
 void UpdateGame()
 {
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-    {
-        int square = 8 * (GetMouseY() / squareHeight) + GetMouseX() / squareWidth;
+    int square          = 8 * (GetMouseY() / squareHeight) + GetMouseX() / squareWidth;
+    bool isPlayerSquare = State.whiteMask & (1ULL << (63 - square));
 
-        // Check if the square we clicked contains a white piece
-        if (State.whiteMask & (1 << (63 - square)))
-            Player.clickedSquare = square;
-    }
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && isPlayerSquare)
+        Player.clickedSquare = square;
     else if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-    {
         Player.clickedSquare = -1;
-    }
+
+    if (Player.clickedSquare != -1 || isPlayerSquare)
+        SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+    else
+        SetMouseCursor(MOUSE_CURSOR_DEFAULT);
 }
 
 // Draw game (one frame)
