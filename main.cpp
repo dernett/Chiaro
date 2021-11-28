@@ -28,6 +28,13 @@ struct Player
     int clickedSquare;
 } Player;
 
+struct State
+{
+    Bitboard pieceMasks[12];
+    Bitboard whiteMask;
+    Bitboard blackMask;
+} State;
+
 //------------------------------------------------------------------------------------
 // Global Variables Declaration
 //------------------------------------------------------------------------------------
@@ -51,8 +58,6 @@ const char *pieceFileNames[12] = {"resources/whitePawn.png",
                                   "resources/blackKing.png"};
 
 Texture2D pieceTextures[12];
-
-Bitboard pieceMasks[12];
 
 //------------------------------------------------------------------------------------
 // Module Functions Declaration (local)
@@ -99,18 +104,24 @@ void InitGame()
     }
 
     // Represent which squares contain each piece as a bitmask
-    pieceMasks[whitePawn]   = 0b11111111ULL << 8;
-    pieceMasks[whiteKnight] = 0b01000010ULL;
-    pieceMasks[whiteBishop] = 0b00100100ULL;
-    pieceMasks[whiteRook]   = 0b10000001ULL;
-    pieceMasks[whiteQueen]  = 0b00010000ULL;
-    pieceMasks[whiteKing]   = 0b00001000ULL;
-    pieceMasks[blackPawn]   = 0b11111111ULL << 48;
-    pieceMasks[blackKnight] = 0b01000010ULL << 56;
-    pieceMasks[blackBishop] = 0b00100100ULL << 56;
-    pieceMasks[blackRook]   = 0b10000001ULL << 56;
-    pieceMasks[blackQueen]  = 0b00010000ULL << 56;
-    pieceMasks[blackKing]   = 0b00001000ULL << 56;
+    State.pieceMasks[whitePawn]   = 0b11111111ULL << 8;
+    State.pieceMasks[whiteKnight] = 0b01000010ULL;
+    State.pieceMasks[whiteBishop] = 0b00100100ULL;
+    State.pieceMasks[whiteRook]   = 0b10000001ULL;
+    State.pieceMasks[whiteQueen]  = 0b00010000ULL;
+    State.pieceMasks[whiteKing]   = 0b00001000ULL;
+    State.pieceMasks[blackPawn]   = 0b11111111ULL << 48;
+    State.pieceMasks[blackKnight] = 0b01000010ULL << 56;
+    State.pieceMasks[blackBishop] = 0b00100100ULL << 56;
+    State.pieceMasks[blackRook]   = 0b10000001ULL << 56;
+    State.pieceMasks[blackQueen]  = 0b00010000ULL << 56;
+    State.pieceMasks[blackKing]   = 0b00001000ULL << 56;
+
+    for (int piece = 0; piece < 6; piece++)
+        State.whiteMask |= State.pieceMasks[piece];
+
+    for (int piece = 6; piece < 12; piece++)
+        State.blackMask |= State.pieceMasks[piece];
 
     Player.clickedSquare = -1;
 }
@@ -120,7 +131,11 @@ void UpdateGame()
 {
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
     {
-        Player.clickedSquare = 8 * (GetMouseY() / squareHeight) + GetMouseX() / squareWidth;
+        int square = 8 * (GetMouseY() / squareHeight) + GetMouseX() / squareWidth;
+
+        // Check if the square we clicked contains a white piece
+        if (State.whiteMask & (1 << (63 - square)))
+            Player.clickedSquare = square;
     }
     else if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
     {
@@ -152,7 +167,7 @@ void DrawGame()
         // Draw pieces
         for (int piece = 0; piece < 12; piece++)
         {
-            for (Bitboard mask = pieceMasks[piece]; mask; mask = _blsr_u64(mask))
+            for (Bitboard mask = State.pieceMasks[piece]; mask; mask = _blsr_u64(mask))
             {
                 int square = 63 - _tzcnt_u64(mask);
                 int i = square / 8, j = square % 8;
